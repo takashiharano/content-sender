@@ -7,7 +7,7 @@
 #==============================================================================
 ROOT_PATH = '../'
 
-CONTENT_DIR = './'
+CONTENT_DIR = ''
 CONTENT_FILE = 'test.pdf'
 MIME = 'application/pdf'
 
@@ -91,9 +91,9 @@ def write_log(context, path, content, q):
 
     text_list = [
         date_time,
-        user,
         path,
         str(content_len) + ' bytes',
+        user,
         addr,
         host,
         ua,
