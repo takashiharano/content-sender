@@ -35,7 +35,9 @@ LOG_MAX = 1000
 def send_content(context, q):
     content = util.read_binary_file(CONTENT_PATH)
     write_log(context, CONTENT_PATH, content, q)
-    util.send_response(content, MIME)
+    content_len = len(content)
+    headers = [{'Content-Length': str(content_len)}]
+    web.send_response(content, MIME, headers)
 
 #------------------------------------------------------------------------------
 def synchronize_start():
@@ -77,12 +79,13 @@ def send_log(log_list):
     s = ''
     for i in range(len(log_list)):
         s += log_list[i] + '\n'
-    util.send_response(s, 'text/plain')
+    web.send_response(s, 'text/plain')
 
 #------------------------------------------------------------------------------
 def write_log(context, path, content, q):
     now = util.get_timestamp()
     date_time = util.get_datetime_str(now, fmt='%Y-%m-%dT%H:%M:%S.%f')
+    sid = get_session_id(context)
     user = get_user_name(context)
     addr = util.get_ip_addr()
     host = util.get_host_name()
@@ -93,6 +96,7 @@ def write_log(context, path, content, q):
         date_time,
         path,
         str(content_len) + ' bytes',
+        sid,
         user,
         addr,
         host,
@@ -117,6 +121,13 @@ def write_log_to_file(logtxt):
         util.append_line_to_text_file(LOG_FILE_PATH, logtxt, max=LOG_MAX)
         synchronize_end()
 
+def get_session_id(context):
+    sid = context.get_session_id()
+    if sid is None:
+        return '-'
+    sid = util.snip(sid, 7, 3)
+    return sid
+
 def get_user_name(context):
     user_name = context.get_user_fullname()
     if user_name == '':
@@ -125,6 +136,7 @@ def get_user_name(context):
 
 #------------------------------------------------------------------------------
 def main():
+    web.init(http_encryption=False)
     context = web.on_access()
 
     q = util.get_query()
