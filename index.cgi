@@ -90,6 +90,7 @@ def write_log(context, path, content, q):
     addr = util.get_ip_addr()
     host = util.get_host_name()
     ua = util.get_user_agent()
+    brows = util.get_browser_short_name(ua)
     content_len = len(content)
 
     text_list = [
@@ -100,7 +101,7 @@ def write_log(context, path, content, q):
         user,
         addr,
         host,
-        ua,
+        brows,
         q
     ]
     logtxt = build_log_text(text_list)
