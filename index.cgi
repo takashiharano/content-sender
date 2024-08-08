@@ -126,7 +126,7 @@ def get_session_id(context):
     sid = context.get_session_id()
     if sid is None:
         return '-'
-    sid = util.snip(sid, 7, 3)
+    sid = sid[:7]
     return sid
 
 def get_user_name(context):
