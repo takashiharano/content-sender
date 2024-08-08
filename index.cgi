@@ -76,9 +76,7 @@ def get_log():
     return util.read_text_file_as_list(LOG_FILE_PATH)
 
 def send_log(log_list):
-    s = ''
-    for i in range(len(log_list)):
-        s += log_list[i] + '\n'
+    s = util.align_by_tab(log_list)
     web.send_response(s, 'text/plain')
 
 #------------------------------------------------------------------------------
