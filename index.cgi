@@ -5,7 +5,7 @@
 # Copyright (c) 2024 Takashi Harano
 # Released under the MIT license
 #==============================================================================
-ROOT_PATH = '../'
+ROOT_PATH = '../../'
 
 CONTENT_DIR = ''
 CONTENT_FILE = 'test.pdf'
@@ -29,4 +29,4 @@ import content
 
 CONTENT_PATH = CONTENT_DIR + CONTENT_FILE
 
-content.main(CONTENT_PATH, MIME, LOG_FILE, LOG_VIEW_PRIV)
+content.main(ROOT_PATH, CONTENT_PATH, MIME, LOG_FILE, LOG_VIEW_PRIV)

@@ -15,7 +15,7 @@ util.append_system_path(__file__, ROOT_PATH + 'websys/bin')
 import web
 
 LOCK_FILE_PATH = 'lock'
-LOG_DIR = ROOT_PATH + '../private/logs/contents/'
+LOG_DIR = '../private/logs/contents/'
 LOG_MAX = 1000
 
 #------------------------------------------------------------------------------
@@ -115,8 +115,8 @@ def send_error(s):
     web.send_response(s, 'text/plain')
 
 #------------------------------------------------------------------------------
-def main(content_path, mime, log_file, log_view_priv=None):
-    log_path = LOG_DIR + log_file
+def main(root_dir, content_path, mime, log_file, log_view_priv=None):
+    log_path = root_dir + LOG_DIR + log_file
     web.init(http_encryption=False)
     context = web.on_access()
 
