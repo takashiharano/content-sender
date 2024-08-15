@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ROOT_PATH + 'libs'))
 import util
 
 util.append_system_path(__file__, ROOT_PATH + 'websys')
-import web
+import websys
 
 LOCK_FILE_PATH = 'lock'
 LOG_DIR = '../private/logs/contents/'
@@ -23,7 +23,7 @@ def send_content(context, content_path, mime, q, log_path):
     write_log(context, content_path, content, q, log_path)
     content_len = len(content)
     headers = [{'Content-Length': str(content_len)}]
-    web.send_response(content, mime, headers)
+    websys.send_response(content, mime, headers)
 
 #------------------------------------------------------------------------------
 def synchronize_start():
@@ -54,7 +54,7 @@ def get_log(log_path):
 
 def send_log(log_list):
     s = util.align_by_tab(log_list)
-    web.send_response(s, 'text/plain')
+    websys.send_response(s, 'text/plain')
 
 #------------------------------------------------------------------------------
 def write_log(context, path, content, q, log_path):
@@ -111,13 +111,13 @@ def get_user_name(context):
     return user_name
 
 def send_error(s):
-    web.send_response(s, 'text/plain')
+    websys.send_response(s, 'text/plain')
 
 #------------------------------------------------------------------------------
 def main(root_dir, content_path, mime, log_file, log_view_priv=None):
     log_path = root_dir + LOG_DIR + log_file
-    web.init(http_encryption=False)
-    context = web.on_access()
+    websys.init(http_encryption=False)
+    context = websys.on_access()
 
     q = util.get_query()
     log_n = util.get_request_param('log', q=q)
