@@ -21,9 +21,6 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ROOT_PATH + 'libs'))
 import util
 
-util.append_system_path(__file__, ROOT_PATH + 'websys/bin')
-import web
-
 util.append_system_path(__file__, ROOT_PATH + 'content')
 import content
 
