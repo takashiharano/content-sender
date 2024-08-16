@@ -117,11 +117,12 @@ def write_log(context, path, content, q, log_path):
     ua = util.get_user_agent()
     brows = util.get_browser_short_name(ua)
     content_len = len(content)
+    s_content_len = util.format_number(content_len)
 
     text_list = [
         date_time,
         path,
-        str(content_len) + ' bytes',
+        s_content_len + ' bytes',
         sid,
         user,
         addr,
