@@ -2,22 +2,17 @@
 #!/usr/bin/python3
 #==============================================================================
 # Content Sender
-# Copyright (c) 2024 Takashi Harano
-# Released under the MIT license
-#==============================================================================
+#------------------------------------------------------------------------------
 ROOT_PATH = '../../'
 
 CONTENT_DIR = ''
 CONTENT_FILE = 'test.pdf'
-MIME = 'application/pdf'
 
-LOG_FILE = CONTENT_FILE + '.log'
 LOG_VIEW_PRIV = 'xxxadmin'
 
 #------------------------------------------------------------------------------
 import os
 import sys
-
 sys.path.append(os.path.join(os.path.dirname(__file__), ROOT_PATH + 'libs'))
 import util
 
@@ -26,4 +21,4 @@ import content
 
 CONTENT_PATH = CONTENT_DIR + CONTENT_FILE
 
-content.main(ROOT_PATH, CONTENT_PATH, MIME, LOG_FILE, LOG_VIEW_PRIV)
+content.main(ROOT_PATH, CONTENT_PATH, LOG_VIEW_PRIV)

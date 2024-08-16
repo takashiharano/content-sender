@@ -13,14 +13,60 @@ import util
 util.append_system_path(__file__, ROOT_PATH + 'websys')
 import websys
 
+import config
+
 LOCK_FILE_PATH = 'lock'
 LOG_DIR = '../private/logs/contents/'
 LOG_MAX = 1000
 
+MIME_TYPE = {
+    'accdb': 'application/msaccess',
+    'avif': 'image/avif',
+    'bmp': 'image/bmp',
+    'cab': 'application/vnd.ms-cab-compressed',
+    'class': 'application/octet-stream',
+    'cur': 'image/vnd.microsoft.icon',
+    'elf': 'application/octet-stream',
+    'eps': 'application/postscript',
+    'exe': 'application/x-msdownload',
+    'gif': 'image/gif',
+    'gz': 'application/gzip',
+    'html': 'text/html',
+    'ico': 'image/x-icon',
+    'jpg': 'image/jpeg',
+    'lzh': 'application/octet-stream',
+    'mid': 'audio/midi',
+    'mov': 'video/quicktime',
+    'mp3': 'audio/mpeg',
+    'mp4': 'video/mp4',
+    'mpg': 'video/mpeg',
+    'ole2': 'application/octet-stream',
+    'pdf': 'application/pdf',
+    'png': 'image/png',
+    'svg': 'image/svg+xml',
+    'txt': 'plain/text',
+    'wav': 'audio/wav',
+    'webp': 'image/webp',
+    'xml': 'text/xml',
+    'zip': 'application/x-zip-compressed',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'war': 'application/x-zip',
+    'jar': 'application/java-archive'
+}
+
 #------------------------------------------------------------------------------
-def send_content(context, content_path, mime, q, log_path):
+def get_mime_type(content_path):
+    ext = util.get_file_ext(content_path)
+    mime = MIME_TYPE[ext]
+    return mime
+
+#------------------------------------------------------------------------------
+def send_content(context, content_path, q, log_path):
     content = util.read_binary_file(content_path)
     write_log(context, content_path, content, q, log_path)
+    mime = get_mime_type(content_path)
     content_len = len(content)
     headers = [{'Content-Length': str(content_len)}]
     websys.send_response(content, mime, headers)
@@ -58,6 +104,10 @@ def send_log(log_list):
 
 #------------------------------------------------------------------------------
 def write_log(context, path, content, q, log_path):
+    uid = context.get_user_id()
+    if should_exclude_logging(uid):
+        return
+
     now = util.get_timestamp()
     date_time = util.get_datetime_str(now, fmt='%Y-%m-%dT%H:%M:%S.%f')
     sid = get_session_id(context)
@@ -82,6 +132,14 @@ def write_log(context, path, content, q, log_path):
     logtxt = build_log_text(text_list)
 
     write_log_to_file(log_path, logtxt)
+
+def should_exclude_logging(uid):
+    exclude_uids = config.exclude_logging_uids
+    for i in range(len(exclude_uids)):
+        id = exclude_uids[i]
+        if id == uid:
+            return True
+    return False
 
 def build_log_text(text_list):
     s = ''
@@ -114,8 +172,9 @@ def send_error(s):
     websys.send_response(s, 'text/plain')
 
 #------------------------------------------------------------------------------
-def main(root_dir, content_path, mime, log_file, log_view_priv=None):
-    log_path = root_dir + LOG_DIR + log_file
+def main(root_dir, content_path, log_view_priv=None):
+    filename = util.get_filename(content_path)
+    log_path = root_dir + LOG_DIR + filename + '.log'
     websys.init(http_encryption=False)
     context = websys.on_access()
 
@@ -131,4 +190,4 @@ def main(root_dir, content_path, mime, log_file, log_view_priv=None):
         view_log(context, log_path, n, log_view_priv)
         return
 
-    send_content(context, content_path, mime, q, log_path)
+    send_content(context, content_path, q, log_path)
