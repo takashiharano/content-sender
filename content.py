@@ -63,7 +63,7 @@ def get_mime_type(content_path):
     return mime
 
 #------------------------------------------------------------------------------
-def send_content(context, content_path, content_priv, q, log_path):
+def send_content(context, content_root, content_path, content_priv, q, log_path):
     info = omit_file_param(q)
     content = None
 
@@ -74,14 +74,15 @@ def send_content(context, content_path, content_priv, q, log_path):
         send_error(status)
         return False
 
-    if not util.path_exists(content_path):
+    file_path = content_root + content_path
+    if not util.path_exists(file_path):
         status = 'READ_ERROR'
         info = status + ' ' + info
         write_log(context, log_path, content_path, content, info)
         send_error(status)
         return False
 
-    content = util.read_binary_file(content_path)
+    content = util.read_binary_file(file_path)
     write_log(context, log_path, content_path, content, info)
     mime = get_mime_type(content_path)
     content_len = len(content)
@@ -229,6 +230,7 @@ def main(settings):
     context = websys.on_access()
 
     root_path = settings['root_path']
+    base_path = settings['base_path']
     default_content_path = settings['default_content_path']
     allow_content_paths = settings['allow_content_paths']
     content_priv = settings['content_priv']
@@ -266,4 +268,6 @@ def main(settings):
         send_error('NOT_FOUND')
         return
 
-    send_content(context, content_path, content_priv, q, log_path)
+    content_root = root_path + base_path
+
+    send_content(context, content_root, content_path, content_priv, q, log_path)
