@@ -63,13 +63,34 @@ def get_mime_type(content_path):
     return mime
 
 #------------------------------------------------------------------------------
-def send_content(context, content_path, q, log_path):
+def send_content(context, content_path, content_priv, q, log_path):
+    info = omit_file_param(q)
+    content = None
+
+    if content_priv != '' and not context.has_permission(content_priv):
+        status = 'FORBIDDEN'
+        info = status + ' ' + info
+        write_log(context, log_path, content_path, content, info)
+        send_error(status)
+        return False
+
+    if not util.path_exists(content_path):
+        status = 'READ_ERROR'
+        info = status + ' ' + info
+        write_log(context, log_path, content_path, content, info)
+        send_error(status)
+        return False
+
     content = util.read_binary_file(content_path)
-    write_log(context, content_path, content, q, log_path)
+    write_log(context, log_path, content_path, content, info)
     mime = get_mime_type(content_path)
     content_len = len(content)
     headers = [{'Content-Length': str(content_len)}]
     websys.send_response(content, mime, headers)
+
+#------------------------------------------------------------------------------
+def send_error(s):
+    websys.send_response(s, 'text/plain')
 
 #------------------------------------------------------------------------------
 def synchronize_start():
@@ -102,8 +123,15 @@ def send_log(log_list):
     s = util.align_by_tab(log_list)
     websys.send_response(s, 'text/plain')
 
+def omit_file_param(q):
+    q = util.replace(q, 'file=[^&]+', '')
+    q = util.replace(q, '^&', '')
+    q = util.replace(q, '&$', '')
+    q = util.replace(q, '&&', '&')
+    return q
+
 #------------------------------------------------------------------------------
-def write_log(context, path, content, q, log_path):
+def write_log(context, log_path, path, content, info):
     uid = context.get_user_id()
     if should_exclude_logging(uid):
         return
@@ -116,19 +144,21 @@ def write_log(context, path, content, q, log_path):
     host = util.get_host_name()
     ua = util.get_user_agent()
     brows = util.get_browser_short_name(ua)
-    content_len = len(content)
-    s_content_len = util.format_number(content_len)
+    s_content_len = ''
+    if content is not None:
+        content_len = len(content)
+        s_content_len = util.format_number(content_len) + ' bytes'
 
     text_list = [
         date_time,
         path,
-        s_content_len + ' bytes',
+        s_content_len,
         sid,
         user,
         addr,
         host,
         brows,
-        q
+        info
     ]
     logtxt = build_log_text(text_list)
 
@@ -169,15 +199,26 @@ def get_user_name(context):
         user_name = '-'
     return user_name
 
-def send_error(s):
-    websys.send_response(s, 'text/plain')
+def is_allowed_path(content_path, allow_content_paths):
+    for i in range(len(allow_content_paths)):
+        path = allow_content_paths[i]
+        if content_path == path:
+            return True
+    return False
 
 #------------------------------------------------------------------------------
-def main(root_dir, content_path, log_view_priv=None):
-    filename = util.get_filename(content_path)
-    log_path = root_dir + LOG_DIR + filename + '.log'
+def main(settings):
     websys.init(http_encryption=False)
     context = websys.on_access()
+
+    root_path = settings['root_path']
+    default_content_path = settings['default_content_path']
+    allow_content_paths = settings['allow_content_paths']
+    content_priv = settings['content_priv']
+    log_file_name = settings['log_file_name']
+    log_view_priv = settings['log_view_priv']
+
+    log_path = root_path + LOG_DIR + log_file_name + '.log'
 
     q = util.get_query()
     log_n = util.get_request_param('log', q=q)
@@ -191,4 +232,16 @@ def main(root_dir, content_path, log_view_priv=None):
         view_log(context, log_path, n, log_view_priv)
         return
 
-    send_content(context, content_path, q, log_path)
+    content_path = default_content_path
+
+    file = util.get_request_param('file')
+    if file is not None:
+        content_path = None
+        if is_allowed_path(file, allow_content_paths):
+            content_path = file
+
+    if content_path is None:
+        send_error('NOT_FOUND')
+        return
+
+    send_content(context, content_path, content_priv, q, log_path)

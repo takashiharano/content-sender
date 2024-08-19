@@ -3,15 +3,20 @@
 #==============================================================================
 # Content Sender
 #------------------------------------------------------------------------------
-ROOT_PATH = '../../'
-CONTENT_PATH = 'test.pdf'
-LOG_VIEW_PRIV = 'xxxadmin'
-
+settings = {
+    'root_path': '../../',
+    'default_content_path': 'test.pdf',
+    'allow_content_paths': ['test.pdf', 'b/test2.pdf'],
+    'content_priv': '',
+    'log_file_name': 'test',
+    'log_view_priv': 'xxxadmin'
+}
 #------------------------------------------------------------------------------
 import os
 import sys
+ROOT_PATH = settings['root_path']
 sys.path.append(os.path.join(os.path.dirname(__file__), ROOT_PATH + 'libs'))
 import util
 util.append_system_path(__file__, ROOT_PATH + 'content')
 import content
-content.main(ROOT_PATH, CONTENT_PATH, LOG_VIEW_PRIV)
+content.main(settings)
