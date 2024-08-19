@@ -268,6 +268,9 @@ def main(settings):
         send_error('NOT_FOUND')
         return
 
-    content_root = root_path + base_path
+    content_root = ''
+    if base_path != '':
+        content_root = base_path
+        content_root = util.replace(content_root, '%ROOT_PATH%', root_path)
 
     send_content(context, content_root, content_path, content_priv, q, log_path)

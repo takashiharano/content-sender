@@ -5,7 +5,7 @@
 #------------------------------------------------------------------------------
 settings = {
     'root_path': '../../',
-    'base_path': '../private/content1/a/',
+    'base_path': '%ROOT_PATH%../private/content1/a/',
     'default_content_path': 'test.pdf',
     'allow_content_paths': ['test.pdf', 'b/test2.pdf'],
     'content_priv': 'p1',
