@@ -121,8 +121,56 @@ def get_log(log_path):
     return util.read_text_file_as_list(log_path)
 
 def send_log(log_list):
-    s = util.align_by_tab(log_list)
-    websys.send_response(s, 'text/plain')
+    html = '''<html>
+<head>
+<title>Log</title>
+<style>
+body {
+  font-size: 12px;
+  font-family: Consolas, Monaco, Menlo, monospace, sans-serif;
+}
+table {
+  border-collapse: collapse;
+  font-size: 14px;
+}
+td {
+  padding: 0;
+  padding-right: 24px;
+  white-space: pre;
+}
+</style>
+</head>
+<body>
+<table>
+'''
+
+    for i in range(len(log_list)):
+        l = log_list[i]
+        logs = l.split('\t')
+        date_time = logs[0]
+        path = logs[1]
+        s_content_len = logs[2]
+        sid = logs[3]
+        user = util.escape_xml(logs[4])
+        addr = logs[5]
+        host = logs[6]
+        brows = logs[7]
+        info = logs[8]
+
+        html += '<tr>'
+        html += '<td>' + date_time + '</td>'
+        html += '<td>' + path + '</td>'
+        html += '<td>' + s_content_len + '</td>'
+        html += '<td>' + sid + '</td>'
+        html += '<td>' + user + '</td>'
+        html += '<td>' + addr + '</td>'
+        html += '<td>' + host + '</td>'
+        html += '<td>' + brows + '</td>'
+        html += '<td>' + info + '</td>'
+        html += '</tr>'
+
+    html += '<table></body></html>'
+    websys.send_response(html, 'text/html')
 
 def omit_file_param(q):
     q = util.replace(q, 'file=[^&]+', '')
@@ -197,7 +245,10 @@ def get_session_id(context):
 def get_user_name(context):
     user_name = context.get_user_fullname()
     if user_name == '':
-        user_name = '-'
+        ts = context.get_timestamp()
+        user_name = '<Anonymous>'
+        if ts is not None:
+            user_name += str(ts)
     return user_name
 
 def is_allowed_path(content_path, allow_content_paths):
