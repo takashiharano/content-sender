@@ -126,12 +126,12 @@ def send_log(log_list):
 <title>Log</title>
 <style>
 body {
-  font-size: 12px;
+  font-size: 13px;
   font-family: Consolas, Monaco, Menlo, monospace, sans-serif;
 }
 table {
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
 }
 td {
   padding: 0;
