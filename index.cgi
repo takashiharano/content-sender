@@ -7,8 +7,12 @@ settings = {
     'root_path': '../../',
     'base_path': '%ROOT_PATH%../private/content1/a/',
     'default_content_path': 'test.pdf',
-    'allow_content_paths': ['test.pdf', 'b/test2.pdf'],
-    'content_priv': 'p1',
+    'allow_content_paths': [
+      'test.pdf',
+      'Book1.xlsx',
+      'b/test2.pdf'
+    ],
+    'content_priv': '',
     'log_file_name': 'test',
     'log_view_priv': 'xxxadmin'
 }

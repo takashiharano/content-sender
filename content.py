@@ -19,48 +19,50 @@ LOCK_FILE_PATH = 'lock'
 LOG_DIR = '../private/logs/contents/'
 LOG_MAX = 1000
 
-MIME_TYPE = {
-    'accdb': 'application/msaccess',
-    'avif': 'image/avif',
-    'bmp': 'image/bmp',
-    'cab': 'application/vnd.ms-cab-compressed',
-    'class': 'application/octet-stream',
-    'cur': 'image/vnd.microsoft.icon',
-    'elf': 'application/octet-stream',
-    'eps': 'application/postscript',
-    'exe': 'application/x-msdownload',
-    'gif': 'image/gif',
-    'gz': 'application/gzip',
-    'html': 'text/html',
-    'ico': 'image/x-icon',
-    'jpg': 'image/jpeg',
-    'lzh': 'application/octet-stream',
-    'mid': 'audio/midi',
-    'mov': 'video/quicktime',
-    'mp3': 'audio/mpeg',
-    'mp4': 'video/mp4',
-    'mpg': 'video/mpeg',
-    'ole2': 'application/octet-stream',
-    'pdf': 'application/pdf',
-    'png': 'image/png',
-    'svg': 'image/svg+xml',
-    'txt': 'plain/text',
-    'wav': 'audio/wav',
-    'webp': 'image/webp',
-    'xml': 'text/xml',
-    'zip': 'application/x-zip-compressed',
-    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'war': 'application/x-zip',
-    'jar': 'application/java-archive'
+FILE_TYPES = {
+    'accdb': {'mime': 'application/msaccess', 'download': True},
+    'avif': {'mime': 'image/avif', 'download': True},
+    'bmp': {'mime': 'image/bmp', 'download': False},
+    'cab': {'mime': 'application/vnd.ms-cab-compressed', 'download': True},
+    'class': {'mime': 'application/octet-stream', 'download': True},
+    'cur': {'mime': 'image/vnd.microsoft.icon', 'download': True},
+    'elf': {'mime': 'application/octet-stream', 'download': True},
+    'eps': {'mime': 'application/postscript', 'download': True},
+    'exe': {'mime': 'application/x-msdownload', 'download': True},
+    'gif': {'mime': 'image/gif', 'download': False},
+    'gz': {'mime': 'application/gzip', 'download': True},
+    'html': {'mime': 'text/html', 'download': False},
+    'ico': {'mime': 'image/x-icon', 'download': False},
+    'jpg': {'mime': 'image/jpeg', 'download': False},
+    'lzh': {'mime': 'application/octet-stream', 'download': True},
+    'mid': {'mime': 'audio/midi', 'download': True},
+    'mov': {'mime': 'video/quicktime', 'download': True},
+    'mp3': {'mime': 'audio/mpeg', 'download': True},
+    'mp4': {'mime': 'video/mp4', 'download': True},
+    'mpg': {'mime': 'video/mpeg', 'download': True},
+    'ole2': {'mime': 'application/octet-stream', 'download': True},
+    'pdf': {'mime': 'application/pdf', 'download': False},
+    'png': {'mime': 'image/png', 'download': False},
+    'svg': {'mime': 'image/svg+xml', 'download': False},
+    'txt': {'mime': 'plain/text', 'download': False},
+    'wav': {'mime': 'audio/wav', 'download': True},
+    'webp': {'mime': 'image/webp', 'download': False},
+    'xml': {'mime': 'text/xml', 'download': True},
+    'zip': {'mime': 'application/x-zip-compressed'},
+    'xlsx': {'mime': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'download': True},
+    'docx': {'mime': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'download': True},
+    'pptx': {'mime': 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'download': True},
+    'war': {'mime': 'application/x-zip', 'download': True},
+    'jar': {'mime': 'application/java-archive', 'download': True}
 }
 
 #------------------------------------------------------------------------------
-def get_mime_type(content_path):
+def get_file_type(content_path):
     ext = util.get_file_ext(content_path)
-    mime = MIME_TYPE[ext]
-    return mime
+    type = {'mime': 'application/octet-stream'}
+    if ext in FILE_TYPES:
+        type = FILE_TYPES[ext]
+    return type
 
 #------------------------------------------------------------------------------
 def send_content(context, content_root, content_path, content_priv, q, log_path):
@@ -84,9 +86,15 @@ def send_content(context, content_root, content_path, content_priv, q, log_path)
 
     content = util.read_binary_file(file_path)
     write_log(context, log_path, content_path, content, info)
-    mime = get_mime_type(content_path)
+    type = get_file_type(content_path)
+    mime = type['mime']
     content_len = len(content)
     headers = [{'Content-Length': str(content_len)}]
+
+    if type['download']:
+        filename = util.get_filename(content_path)
+        headers.append({'Content-Disposition': 'attachment;filename="' + filename + '"'})
+
     websys.send_response(content, mime, headers)
 
 #------------------------------------------------------------------------------
@@ -307,17 +315,15 @@ def main(settings):
         view_log(context, log_path, n, log_view_priv)
         return
 
-    content_path = default_content_path
-
     file = util.get_request_param('file')
-    if file is not None:
-        content_path = None
+    if file is None:
+        content_path = default_content_path
+    else:
         if is_allowed_path(file, allow_content_paths):
             content_path = file
-
-    if content_path is None:
-        send_error('NOT_FOUND')
-        return
+        else:
+            send_error('NOT_IN_LIST')
+            return
 
     content_root = ''
     if base_path != '':
