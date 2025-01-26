@@ -267,23 +267,6 @@ def is_allowed_path(content_path, allow_content_paths):
     return False
 
 #------------------------------------------------------------------------------
-def build_auth_redirection_screen(root_path):
-    html = '<!DOCTYPE html>'
-    html += '<html>'
-    html += '<head>'
-    html += '<meta charset="utf-8">'
-    html += '<script src="' + root_path + 'libs/util.js"></script>'
-    html += '<script src="' + root_path + 'websys/websys.js"></script>'
-    html += '<script>'
-    html += 'websys.init(\'' + root_path + '\');'
-    html += '$onLoad = function() {websys.authRedirection(location.href);};'
-    html += '</script>'
-    html += '</head>'
-    html += '<body></body>'
-    html += '</html>'
-    return html
-
-#------------------------------------------------------------------------------
 def main(settings):
     websys.init(http_encryption=False)
     context = websys.on_access()
@@ -297,8 +280,7 @@ def main(settings):
     log_view_priv = settings['log_view_priv']
 
     if content_priv != '' and not context.is_authorized():
-        html = build_auth_redirection_screen(root_path)
-        util.send_html(html)
+        websys.redirect_auth_screen(root_path)
         return
 
     log_path = root_path + LOG_DIR + log_file_name + '.log'
