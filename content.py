@@ -1,7 +1,7 @@
 #==============================================================================
 # Content Sender
 # Copyright (c) 2024 Takashi Harano
-# Released under the MIT license
+# Released under the MIT License
 #==============================================================================
 import os
 import sys
@@ -25,6 +25,7 @@ FILE_TYPES = {
     'bmp': {'mime': 'image/bmp', 'download': False},
     'cab': {'mime': 'application/vnd.ms-cab-compressed', 'download': True},
     'class': {'mime': 'application/octet-stream', 'download': True},
+    'csv': {'mime': 'text/csv', 'download': False},
     'cur': {'mime': 'image/vnd.microsoft.icon', 'download': True},
     'elf': {'mime': 'application/octet-stream', 'download': True},
     'eps': {'mime': 'application/postscript', 'download': True},
@@ -44,7 +45,8 @@ FILE_TYPES = {
     'pdf': {'mime': 'application/pdf', 'download': False},
     'png': {'mime': 'image/png', 'download': False},
     'svg': {'mime': 'image/svg+xml', 'download': False},
-    'txt': {'mime': 'plain/text', 'download': False},
+    'tsv': {'mime': 'text/plain', 'download': False, 'fn': 'send_tsv'},
+    'txt': {'mime': 'text/plain', 'download': False},
     'wav': {'mime': 'audio/wav', 'download': True},
     'webp': {'mime': 'image/webp', 'download': False},
     'xml': {'mime': 'text/xml', 'download': True},
@@ -84,9 +86,17 @@ def send_content(context, content_root, content_path, content_priv, q, log_path)
         send_error(status)
         return False
 
+    type = get_file_type(content_path)
+
+    if 'fn' in type:
+        func_name = type['fn']
+        g = globals()
+        if func_name in g:
+            g[func_name](content_path, file_path)
+            return
+
     content = util.read_binary_file(file_path)
     write_log(context, log_path, content_path, content, info)
-    type = get_file_type(content_path)
     mime = type['mime']
     content_len = len(content)
     headers = [{'Content-Length': str(content_len)}]
@@ -111,27 +121,19 @@ def synchronize_end():
     util.file_unlock(LOCK_FILE_PATH)
 
 #------------------------------------------------------------------------------
-def view_log(context, log_path, n, log_view_priv):
-    if not context.has_permission(log_view_priv):
-        send_error('FORBIDDEN')
-        return False
+def send_tsv(name, file_path):
+    tsv_list = util.read_text_file_as_list(file_path)
+    send_tsv_html(name, tsv_list)
 
-    log_list = get_log(log_path)
+def send_tsv_html(name, tsv_list, n=0):
     if n > 0:
         n = n * (-1)
-        log_list = log_list[n:]
+        tsv_list = tsv_list[n:]
 
-    send_log(log_list)
-
-    return True
-
-def get_log(log_path):
-    return util.read_text_file_as_list(log_path)
-
-def send_log(log_list):
-    html = '''<html>
-<head>
-<title>Log</title>
+    html = '<html>'
+    html += '<head>'
+    html += '<title>' + name + '</title>'
+    html += '''
 <style>
 body {
   font-size: 13px;
@@ -152,40 +154,37 @@ td {
 <table>
 '''
 
-    for i in range(len(log_list)):
-        l = log_list[i]
-        logs = l.split('\t')
-        date_time = logs[0]
-        path = logs[1]
-        s_content_len = logs[2]
-        sid = logs[3]
-        user = util.escape_xml(logs[4])
-        addr = logs[5]
-        host = logs[6]
-        brows = logs[7]
-        info = logs[8]
+    for i in range(len(tsv_list)):
+        l = tsv_list[i]
+        fields = l.split('\t')
 
         html += '<tr>'
-        html += '<td>' + date_time + '</td>'
-        html += '<td>' + path + '</td>'
-        html += '<td>' + s_content_len + '</td>'
-        html += '<td>' + sid + '</td>'
-        html += '<td>' + user + '</td>'
-        html += '<td>' + addr + '</td>'
-        html += '<td>' + host + '</td>'
-        html += '<td>' + brows + '</td>'
-        html += '<td>' + info + '</td>'
+        for j in range(len(fields)):
+            v = util.escape_xml(fields[j])
+            html += '<td>' + v + '</td>'
+
         html += '</tr>'
 
     html += '<table></body></html>'
     websys.send_response(html, 'text/html')
 
+#------------------------------------------------------------------------------
 def omit_file_param(q):
     q = util.replace(q, 'file=[^&]+', '')
     q = util.replace(q, '^&', '')
     q = util.replace(q, '&$', '')
     q = util.replace(q, '&&', '&')
     return q
+
+#------------------------------------------------------------------------------
+def view_log(context, log_path, n, log_view_priv):
+    if not context.has_permission(log_view_priv):
+        send_error('FORBIDDEN')
+        return False
+
+    tsv_list = util.read_text_file_as_list(log_path)
+    send_tsv_html('Log', tsv_list, n)
+    return True
 
 #------------------------------------------------------------------------------
 def write_log(context, log_path, path, content, info):
@@ -260,6 +259,8 @@ def get_user_name(context):
     return user_name
 
 def is_allowed_path(content_path, allow_content_paths):
+    if allow_content_paths is None:
+        return True
     for i in range(len(allow_content_paths)):
         path = allow_content_paths[i]
         if content_path == path:
@@ -274,7 +275,9 @@ def main(settings):
     root_path = settings['root_path']
     base_path = settings['base_path']
     default_content_path = settings['default_content_path']
-    allow_content_paths = settings['allow_content_paths']
+    allow_content_paths = None
+    if 'allow_content_paths' in settings:
+        allow_content_paths = settings['allow_content_paths']
     content_priv = settings['content_priv']
     log_file_name = settings['log_file_name']
     log_view_priv = settings['log_view_priv']
