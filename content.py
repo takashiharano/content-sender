@@ -1,6 +1,6 @@
 #==============================================================================
 # Content Sender
-# Copyright (c) 2024 Takashi Harano
+# Copyright 2024 Takashi Harano
 # Released under the MIT License
 #==============================================================================
 import os
