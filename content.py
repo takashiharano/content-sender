@@ -209,8 +209,8 @@ def write_log(context, log_path, path, content, info):
         date_time,
         path,
         s_content_len,
-        sid,
         user,
+        sid,
         addr,
         host,
         brows,
@@ -250,7 +250,7 @@ def get_session_id(context):
     return sid
 
 def get_user_name(context):
-    user_name = context.get_user_fullname()
+    user_name = context.get_user_full_name()
     if user_name == '':
         ts = context.get_timestamp()
         user_name = '<Anonymous>'
