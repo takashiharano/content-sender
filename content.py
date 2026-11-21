@@ -269,7 +269,7 @@ def is_allowed_path(content_path, allow_content_paths):
 
 #------------------------------------------------------------------------------
 def main(settings):
-    websys.init(http_encryption=False)
+    websys.init(http_scramble=False)
     context = websys.on_access()
 
     root_path = settings['root_path']
